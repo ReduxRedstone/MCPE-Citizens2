@@ -1,0 +1,9 @@
+name: Citizens
+main: Citizens\Main
+version: 1.0.0
+api: 3.0.0-ALPHA2
+
+commands:
+ npc:
+  description: "Main NPC command"
+  usage: "/npc <command> [<arguments>]"
