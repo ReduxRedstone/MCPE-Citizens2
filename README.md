@@ -1,7 +1,7 @@
 # MCPE Citizens2
 Second version of my in-dev Citizens remake that uses real entities and not packets.
 
-[![N|Solid](http://i.imgur.com/yanYKEa.png)](https://nodesource.com/products/nsolid)
+[![N|Solid](http://i.imgur.com/yanYKEa.png)](https://forums.pmmp.io/)
 
 This PMMP plugin is a WIP port of the Citizens Spigot/Bukkit plugin to run on Pocket Edition servers. Not all planned features are added yet.
 
