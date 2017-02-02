@@ -78,11 +78,20 @@ class Main extends PluginBase implements Listener {
         if ($packet instanceof InteractPacket and isset($action) and $action === InteractPacket::ACTION_LEFT_CLICK) {
             $entityID = $packet->target;
             $entity = $player->getLevel()->getEntity($entityID);
-            $entityUUID = (string)$entity->getUniqueId();
+            if ($entity instanceof Human) {
+                foreach ($this->npcs as $npc) {
+                    if ($npc["entity_id"] == $packet->target) {
+                        $event->setCancelled();
 
-            if (isset($this->npcs[$entityUUID])) {
-                $event->setCancelled(true);
-                $player->sendMessage("Clicked NPC ".$this->npcs[$entityUUID]["name"]);
+                        $npc_id = $npc["npc_id"];
+                        $emit = array("player"=>$player,"npc_eid"=>$entityID,"npc_key"=>$npc_id,"npc"=>$npc);
+
+                        $player->sendMessage("Clicked NPC ".$npc["name"]);
+                        
+                        $this->getLogger()->info(print_r($emit, true));
+                        return;
+                    }
+                }
             }
         }
     }
@@ -121,6 +130,8 @@ class Main extends PluginBase implements Listener {
         fclose($json);
 
         $this->spawnNPC($data);
+        $player->sendMessage("§6§lCitizens §r§6> §r§aCreated NPC §r".$name."§a ID §9".$id.".");
+        $this->selectNPC($player, $id);
     }
 
     public function spawnNPC($data) {
@@ -164,24 +175,27 @@ class Main extends PluginBase implements Listener {
         $human->setNameTagVisible(true);
         $human->setNameTagAlwaysVisible(true);
 
+        $this->getLogger()->info("spawning");
+
         $human->spawnToAll();
 
         $count = count($this->getServer()->getLevelByName($data["level_name"])->getEntities());
-        $this->npcs[$data["npc_id"]]["entity_id"] = $count++;
+        $this->npcs[$data["npc_id"]] = $data;
+        $this->npcs[$data["npc_id"]]["entity_id"] = $human->getId();
     }
 
     public function despawnNPC($id) {
         if (empty($this->npcs)) {
-            $player->sendMessage("§4§l[ERROR]§r§c No NPCs stored!§r");
             return;
         }
         if (!isset($this->npcs[$id])) {
-            $player->sendMessage("§4§l[ERROR]§r§c You must enter a valid NPC ID!§r");
             return;
         }
 
         $entity = $this->getServer()->getLevelByName($this->npcs[$id]["level_name"])->getEntity($this->npcs[$id]["entity_id"]);
+        $this->getLogger()->info("despawning");
         if ($entity instanceof Human) {
+            $this->getLogger()->info("Found human");
             $this->getServer()->getLevelByName($this->npcs[$id]["level_name"])->removeEntity($entity);
             unset($this->npcs[$id]);
         }
@@ -203,13 +217,40 @@ class Main extends PluginBase implements Listener {
             return false;
         }
         $this->selections[$player->getName()] = $id;
-        $player->sendMessage("§6§lCitizens §r§6> §r§aSelected §b".$this->npcs[$id]["name"]."§a ID §9".$this->npcs[$id]["npc_id"].".");
+        $player->sendMessage("§6§lCitizens §r§6> §r§aSelected §r".$this->npcs[$id]["name"]."§a ID §9".$this->npcs[$id]["npc_id"].".");
+    }
+
+    public function goToNPC($player, $id) {
+    }
+
+    public function moveNPC($player, $id) {
+    }
+
+    public function setSkin($skin, $id) {
+        $this->npcs[$id]["skin"] = $skin;
+        $json = fopen("./plugins/Citizens/npcs/_all.json", "wb");
+        fwrite($json, json_encode($this->npcs));
+        fclose($json);
+        $data = $this->npcs[$id];
+        $this->despawnNPC($id);
+        $this->spawnNPC($data);
+    }
+
+    public function renameNPC($name, $id) {
+        $npc = $this->getServer()->getLevelByName($this->npcs[$id]["level_name"])->getEntity($this->npcs[$id]["entity_id"]);
+        $this->npcs[$id]["name"] = $name;
+        $npc->setNameTag($name);
+        $npc->setNameTagVisible(true);
+        $npc->setNameTagAlwaysVisible(true);
+        $json = fopen("./plugins/Citizens/npcs/_all.json", "wb");
+        fwrite($json, json_encode($this->npcs));
+        fclose($json);
     }
 
     public function getSkin($skin) {
         $path = './plugins/Citizens/skins/'.$skin.'.png';
         if (!file_exists($path) && !is_dir($path)) {
-            $path = './plugins/Citizens/skins/default.png';
+            $path = './plugins/Citizens/skins/yoshi.png';
         }
         $img = imagecreatefrompng($path);
         $bytes = '';

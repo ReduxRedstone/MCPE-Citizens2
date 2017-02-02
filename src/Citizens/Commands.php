@@ -36,6 +36,7 @@ class Commands implements CommandExecutor {
                             $name = implode(" ", $args);
                             $this->plugin->createNPC($sender, $name);
                             break;
+
                         case 'remove':
                             if (!isset($this->plugin->selections[$sender->getName()])) {
                                 $sender->sendMessage("§4§l[ERROR]§r§c You must select an NPC!§r");
@@ -46,8 +47,10 @@ class Commands implements CommandExecutor {
                                 $sender->sendMessage("§4§l[ERROR]§r§c Invalid NPC selection!§r");
                                 return false;
                             }
+                            $sender->sendMessage("§6§lCitizens §r§6> §r§aRemoved NPC §r".$this->plugin->npcs[$id]["name"].".");
                             $this->plugin->removeNPC($id);
                             break;
+
                         case 'select':
                             if (!isset($args[1])) {
                                 $sender->sendMessage("§4§l[ERROR]§r§c No ID set!§r");
@@ -62,6 +65,48 @@ class Commands implements CommandExecutor {
                             }
                             $this->plugin->selectNPC($sender, $id);
                             break;
+
+                        case 'rename':
+                            if (!isset($args[1])) {
+                                $sender->sendMessage("§4§l[ERROR]§r§c No name set!§r");
+                                return false;
+                            }
+                            if (!isset($this->plugin->selections[$sender->getName()])) {
+                                $sender->sendMessage("§4§l[ERROR]§r§c You must select an NPC!§r");
+                                return false;
+                            }
+                            $id = $this->plugin->selections[$sender->getName()];
+                            if (!isset($this->plugin->npcs[$id])) {
+                                $sender->sendMessage("§4§l[ERROR]§r§c Invalid NPC selection!§r");
+                                return false;
+                            }
+
+                            unset($args[0]);
+                            $name = implode(" ", $args);
+
+                            $sender->sendMessage("§6§lCitizens §r§6> §r§aRenamed NPC §r".$this->plugin->npcs[$id]["name"]."§a to§r ".$name.".");
+                            $this->plugin->renameNPC($name, $id);
+                            break;
+
+                        case 'setskin':
+                            if (!isset($args[1])) {
+                                $sender->sendMessage("§4§l[ERROR]§r§c No skin set!§r");
+                                return false;
+                            }
+                            if (!isset($this->plugin->selections[$sender->getName()])) {
+                                $sender->sendMessage("§4§l[ERROR]§r§c You must select an NPC!§r");
+                                return false;
+                            }
+                            $id = $this->plugin->selections[$sender->getName()];
+                            if (!isset($this->plugin->npcs[$id])) {
+                                $sender->sendMessage("§4§l[ERROR]§r§c Invalid NPC selection!§r");
+                                return false;
+                            }
+
+                            $sender->sendMessage("§6§lCitizens §r§6> §r§aReskinned NPC §r".$this->plugin->npcs[$id]["name"].".");
+                            $this->plugin->setSkin($args[1], $id);
+                            break;
+
                         case 'list':
                             $list = "§a==========§6§lCitizens§r§a==========§r";
                             foreach ($this->plugin->npcs as $npc) {
@@ -70,7 +115,7 @@ class Commands implements CommandExecutor {
                                 $x = round($npc["pos"]["x"], 3);
                                 $y = round($npc["pos"]["y"], 3);
                                 $z = round($npc["pos"]["z"], 3);
-                                $list .= "\n§b".$name."§r§b ID: §9".$id."§r§b Pos: §a".$x.", ".$y.", ".$z."";
+                                $list .= "\n§r".$name."§r§b ID: §9".$id."§r§b Pos: §a".$x.", ".$y.", ".$z."";
                             }
                             $list .= "\n§a============================§r";
                             $sender->sendMessage($list);
