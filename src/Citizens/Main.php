@@ -78,19 +78,17 @@ class Main extends PluginBase implements Listener {
         if ($packet instanceof InteractPacket and isset($action) and $action === InteractPacket::ACTION_LEFT_CLICK) {
             $entityID = $packet->target;
             $entity = $player->getLevel()->getEntity($entityID);
-            if ($entity instanceof Human) {
-                foreach ($this->npcs as $npc) {
-                    if ($npc["entity_id"] == $packet->target) {
-                        $event->setCancelled();
+            foreach ($this->npcs as $npc) {
+                if ($npc["entity_id"] == $packet->target) {
+                    $event->setCancelled();
 
-                        $npc_id = $npc["npc_id"];
-                        $emit = array("player"=>$player,"npc_eid"=>$entityID,"npc_key"=>$npc_id,"npc"=>$npc);
+                    $npc_id = $npc["npc_id"];
+                    $emit = array("player"=>$player,"npc_eid"=>$entityID,"npc_key"=>$npc_id,"npc"=>$npc);
 
-                        $player->sendMessage("Clicked NPC ".$npc["name"]);
-                        
-                        $this->getLogger()->info(print_r($emit, true));
-                        return;
-                    }
+                    $player->sendMessage("Clicked NPC ".$npc["name"]);
+                    
+                    $this->getLogger()->info(print_r($emit, true));
+                    return;
                 }
             }
         }
@@ -118,6 +116,7 @@ class Main extends PluginBase implements Listener {
 
         $data = array(
                     "npc_id"=>$id,
+                    "npc_type"=>"Human",
                     "level_name"=>$player->getLevel()->getName(),
                     "name"=>$name,
                     "skin"=>"default",
@@ -170,18 +169,18 @@ class Main extends PluginBase implements Listener {
 
         $skin = $this->getSkin($data["skin"]);
 
-        $human = Entity::createEntity("Human", $chunk, $nbt);
-        $human->setSkin($skin, 'Standard_Custom');
-        $human->setNameTagVisible(true);
-        $human->setNameTagAlwaysVisible(true);
+        $npc = Entity::createEntity($data["npc_type"], $chunk, $nbt);
+        if ($npc instanceof Human) $npc->setSkin($skin, 'Standard_Custom');
+        $npc->setNameTagVisible(true);
+        $npc->setNameTagAlwaysVisible(true);
 
         $this->getLogger()->info("spawning");
 
-        $human->spawnToAll();
+        $npc->spawnToAll();
 
         $count = count($this->getServer()->getLevelByName($data["level_name"])->getEntities());
         $this->npcs[$data["npc_id"]] = $data;
-        $this->npcs[$data["npc_id"]]["entity_id"] = $human->getId();
+        $this->npcs[$data["npc_id"]]["entity_id"] = $npc->getId();
     }
 
     public function despawnNPC($id) {
@@ -191,14 +190,11 @@ class Main extends PluginBase implements Listener {
         if (!isset($this->npcs[$id])) {
             return;
         }
+        $level = $this->getServer()->getLevelByName($this->npcs[$id]["level_name"]);
 
-        $entity = $this->getServer()->getLevelByName($this->npcs[$id]["level_name"])->getEntity($this->npcs[$id]["entity_id"]);
-        $this->getLogger()->info("despawning");
-        if ($entity instanceof Human) {
-            $this->getLogger()->info("Found human");
-            $this->getServer()->getLevelByName($this->npcs[$id]["level_name"])->removeEntity($entity);
-            unset($this->npcs[$id]);
-        }
+        $entity = $level->getEntity($this->npcs[$id]["entity_id"]);
+        $level->removeEntity($entity);
+        unset($this->npcs[$id]);
     }
 
     public function removeNPC($id) {
@@ -223,7 +219,40 @@ class Main extends PluginBase implements Listener {
     public function goToNPC($player, $id) {
     }
 
-    public function moveNPC($player, $id) {
+    public function moveNPC($coords, $id, $player=null) {
+        if (!isset($this->npcs[$id])) {
+            if (isset($player)) {
+                $player->sendMessage("§4§l[ERROR]§r§c You must enter a valid NPC ID!§r");
+            }
+            return false;
+        }
+        $this->npcs[$id]["pos"]["x"]     = $coords->x;
+        $this->npcs[$id]["pos"]["y"]     = $coords->y;
+        $this->npcs[$id]["pos"]["z"]     = $coords->z;
+        $this->npcs[$id]["pos"]["yaw"]   = $coords->yaw;
+        $this->npcs[$id]["pos"]["pitch"] = $coords->pitch;
+        $json = fopen("./plugins/Citizens/npcs/_all.json", "wb");
+        fwrite($json, json_encode($this->npcs));
+        fclose($json);
+        $data = $this->npcs[$id];
+        $this->despawnNPC($id);
+        $this->spawnNPC($data);
+    }
+
+    public function setType($type, $id, $player=null) {
+        if (!isset($this->npcs[$id])) {
+            if (isset($player)) {
+                $player->sendMessage("§4§l[ERROR]§r§c You must enter a valid NPC ID!§r");
+            }
+            return false;
+        }
+        $this->npcs[$id]["npc_type"] = $type;
+        $json = fopen("./plugins/Citizens/npcs/_all.json", "wb");
+        fwrite($json, json_encode($this->npcs));
+        fclose($json);
+        $data = $this->npcs[$id];
+        $this->despawnNPC($id);
+        $this->spawnNPC($data);
     }
 
     public function setSkin($skin, $id) {

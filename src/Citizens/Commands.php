@@ -3,11 +3,16 @@
 namespace Citizens;
 
 use pocketmine\plugin\PluginBase;
+
 use pocketmine\command\Command;
 use pocketmine\command\CommandSender;
 use pocketmine\command\CommandExecutor;
+
 use pocketmine\Player;
+
 use pocketmine\entity\Human;
+
+use pocketmine\level\Location;
 
 
 class Commands implements CommandExecutor {
@@ -105,6 +110,50 @@ class Commands implements CommandExecutor {
 
                             $sender->sendMessage("§6§lCitizens §r§6> §r§aReskinned NPC §r".$this->plugin->npcs[$id]["name"].".");
                             $this->plugin->setSkin($args[1], $id);
+                            break;
+
+                        case 'tp':
+                            if (!isset($this->plugin->selections[$sender->getName()])) {
+                                $sender->sendMessage("§4§l[ERROR]§r§c You must select an NPC!§r");
+                                return false;
+                            }
+                            $id = $this->plugin->selections[$sender->getName()];
+                            if (!isset($this->plugin->npcs[$id])) {
+                                $sender->sendMessage("§4§l[ERROR]§r§c Invalid NPC selection!§r");
+                                return false;
+                            }
+                            $this->plugin->goToNPC($sender, $id);
+                            break;
+
+                        case 'here':
+                        case 'tphere':
+                            if (!isset($this->plugin->selections[$sender->getName()])) {
+                                $sender->sendMessage("§4§l[ERROR]§r§c You must select an NPC!§r");
+                                return false;
+                            }
+                            $id = $this->plugin->selections[$sender->getName()];
+                            if (!isset($this->plugin->npcs[$id])) {
+                                $sender->sendMessage("§4§l[ERROR]§r§c Invalid NPC selection!§r");
+                                return false;
+                            }
+                            $this->plugin->moveNPC(new Location($sender->x,$sender->y,$sender->z,$sender->yaw,$sender->pitch), $id, $sender);
+                            break;
+
+                        case 'type':
+                            if (!isset($args[1])) {
+                                $sender->sendMessage("§4§l[ERROR]§r§c Select a type!§r");
+                                return false;
+                            }
+                            if (!isset($this->plugin->selections[$sender->getName()])) {
+                                $sender->sendMessage("§4§l[ERROR]§r§c You must select an NPC!§r");
+                                return false;
+                            }
+                            $id = $this->plugin->selections[$sender->getName()];
+                            if (!isset($this->plugin->npcs[$id])) {
+                                $sender->sendMessage("§4§l[ERROR]§r§c Invalid NPC selection!§r");
+                                return false;
+                            }
+                            $this->plugin->setType($args[1], $id, $sender);
                             break;
 
                         case 'list':
