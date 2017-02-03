@@ -10,9 +10,6 @@ use pocketmine\plugin\PluginBase;
 use pocketmine\event\server\DataPacketReceiveEvent;
 
 use pocketmine\event\Listener;
-use pocketmine\event\player\PlayerJoinEvent;
-use pocketmine\event\player\PlayerQuitEvent;
-use pocketmine\event\player\PlayerKickEvent;
 
 use pocketmine\level\Location;
 
@@ -39,6 +36,7 @@ use pocketmine\Player;
 
 class Main extends PluginBase implements Listener {
 
+    // Just setting house
     public $config, $npcs = array(), $selections = array();
 
     public function onLoad() {
@@ -46,11 +44,15 @@ class Main extends PluginBase implements Listener {
     }
 
     public function onEnable() {
+
+        // Config shizs
         $this->config = new Config($this);
         $this->config->load();
 
+        // Loading the NPCs initially
         $this->loadNPCs();
 
+        // Registering
         $this->getCommand("npc")->setExecutor(new Commands($this));
         $this->getServer()->getPluginManager()->registerEvents($this, $this);
 
@@ -58,17 +60,16 @@ class Main extends PluginBase implements Listener {
     }
 
     public function onDisable() {
+
+        // Removing NPCs when the server stops
         foreach ($this->npcs as $npc) {
             $this->despawnNPC($npc["npc_id"]);
         }
         $this->getLogger()->info("Citizens by Redux now disabled.");
     }
 
-    public function onJoin(PlayerJoinEvent $event) {
-        $player = $event->getPlayer();
-    }
-
     public function onPacketReceived(DataPacketReceiveEvent $event) {
+
         // Detects if a player clicked an NPC. Working on an emit system so plugins can hook into this click
         $packet = $event->getPacket();
         $player = $event->getPlayer();
@@ -95,10 +96,29 @@ class Main extends PluginBase implements Listener {
     }
 
     public function loadNPCs() {
+
         $this->npcs = json_decode(file_get_contents("./plugins/Citizens/npcs/_all.json"), true);
         if (empty($this->npcs)) return;
         foreach ($this->npcs as $npc) {
-            $this->getLogger()->info(print_r($npc, true));
+
+
+            /**
+             * THIS IS SO UGLY GGGGGGAAAAAAHHHHHHHHH I HATE HACKY FIXES
+             * This little hack will remove all entities inside an NPCs position before it's first spawned,
+             * which technically fixes the duplicated NPC issue :/
+             */
+            
+            $AxisAlignedBB = new \pocketmine\math\AxisAlignedBB($npc["pos"]["x"]-0.1, $npc["pos"]["y"]-0.1, $npc["pos"]["z"]-0.1, $npc["pos"]["x"]+0.1, $npc["pos"]["y"]+0.1, $npc["pos"]["z"]+0.1);
+            $level = $this->getServer()->getLevelByName($npc["level_name"]);
+            foreach ($level->getNearbyEntities($AxisAlignedBB) as $thing) {
+                $x = $npc["pos"]["x"] >> 4;
+                $z = $npc["pos"]["z"] >> 4;
+                $level->loadChunk($x, $z);
+
+                $level->removeEntity($level->getEntity($thing->getId()));
+            }
+
+
             $this->spawnNPC($npc);
         }
     }
