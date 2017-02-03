@@ -35,6 +35,8 @@ This PMMP plugin is a WIP port of the Citizens Spigot/Bukkit plugin to run on Po
 ###Duplicated NPCs
 NPCs are removed when the server closes and respawned when the server starts, however it seems when the server crashes or is forced-closed the event does not fire, and does not remove the old NPCs. Thus resulting in "duplicated" NPCs. I have yet to find a fix for this.
 
+
+#Foot-notes
 [^1]: ^1 Type changing is technically working, however PMMP does not support all entities nor does it allow any entities besides Human to display a name tag. This is a limitation on PMMP.
 
 [^2]: ^2 Clicking an NPC is detected and sends a temporary message to players. Working on a way to `emit` the interaction to allow other plugins to use it as a hook. Plugin currently supports the latest MCPE and Windows10 edition versions.
