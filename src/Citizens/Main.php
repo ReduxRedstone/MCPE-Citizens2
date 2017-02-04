@@ -4,6 +4,7 @@ namespace Citizens;
 
 use Citizens\Commands;
 use Citizens\Config;
+use Citizens\CitizensInteractEvent;
 
 use pocketmine\plugin\PluginBase;
 
@@ -85,10 +86,8 @@ class Main extends PluginBase implements Listener {
 
                     $npc_id = $npc["npc_id"];
                     $emit = array("player"=>$player,"npc_eid"=>$entityID,"npc_key"=>$npc_id,"npc"=>$npc);
-
-                    $player->sendMessage("Clicked NPC ".$npc["name"]);
                     
-                    $this->getLogger()->info(print_r($emit, true));
+                    $this->getServer()->getPluginManager()->callEvent($event = new CitizensInteractEvent($this, $emit));
                     return;
                 }
             }
