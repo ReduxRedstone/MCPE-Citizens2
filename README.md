@@ -15,6 +15,8 @@ This PMMP plugin is a WIP port of the Citizens Spigot/Bukkit plugin to run on Po
 - [ ] changing type [^1]
 - [x] moving NPC
 - [ ] teleporting to NPC
+- [ ] NPC center command
+- [ ] NPC look-at function
 - [x] click/interact detection
 - [x] event emitting for interact
 
