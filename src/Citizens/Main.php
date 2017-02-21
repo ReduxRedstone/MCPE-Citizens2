@@ -37,6 +37,7 @@ use pocketmine\Player;
 
 class Main extends PluginBase implements Listener {
 
+
     // Just setting house
     public $config, $npcs = array(), $selections = array();
 
@@ -77,20 +78,22 @@ class Main extends PluginBase implements Listener {
         if (isset($packet->action)) {
             $action = $packet->action;
         }
-        if ($packet instanceof InteractPacket and isset($action) and $action === InteractPacket::ACTION_LEFT_CLICK) {
-            $entityID = $packet->target;
-            $entity = $player->getLevel()->getEntity($entityID);
-            foreach ($this->npcs as $npc) {
-                if ($npc["entity_id"] == $packet->target) {
-                    $event->setCancelled();
+        if ($packet instanceof InteractPacket and isset($action)) {
+        	if ($action === InteractPacket::ACTION_LEFT_CLICK or $action === InteractPacket::ACTION_RIGHT_CLICK) {
+        		$entityID = $packet->target;
+	            $entity = $player->getLevel()->getEntity($entityID);
+	            foreach ($this->npcs as $npc) {
+	                if ($npc["entity_id"] == $packet->target) {
+	                    $event->setCancelled();
 
-                    $npc_id = $npc["npc_id"];
-                    $emit = array("player"=>$player,"npc_eid"=>$entityID,"npc_key"=>$npc_id,"npc"=>$npc);
-                    
-                    $this->getServer()->getPluginManager()->callEvent($event = new CitizensInteractEvent($this, $emit));
-                    return;
-                }
-            }
+	                    $npc_id = $npc["npc_id"];
+	                    $emit = array("player"=>$player,"npc_eid"=>$entityID,"npc_key"=>$npc_id,"npc"=>$npc);
+	                    
+	                    $this->getServer()->getPluginManager()->callEvent($event = new CitizensInteractEvent($this, $emit));
+	                    return;
+	                }
+	            }
+        	} 
         }
     }
 
@@ -298,7 +301,7 @@ class Main extends PluginBase implements Listener {
     public function getSkin($skin) {
         $path = './plugins/Citizens/skins/'.$skin.'.png';
         if (!file_exists($path) && !is_dir($path)) {
-            $path = './plugins/Citizens/skins/yoshi.png';
+            $path = './plugins/Citizens/skins/default.png';
         }
         $img = imagecreatefrompng($path);
         $bytes = '';

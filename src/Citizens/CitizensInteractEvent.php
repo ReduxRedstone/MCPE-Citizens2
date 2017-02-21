@@ -24,10 +24,6 @@ class CitizensInteractEvent extends PluginEvent implements Listener {
 		$this->npc_skin       = $npc["npc"]["skin"];
 	}
 
-	public function test() {
-		return "Hello World";
-	}
-
 	public function getNpc() {
 		return $this->npc;
 	}
